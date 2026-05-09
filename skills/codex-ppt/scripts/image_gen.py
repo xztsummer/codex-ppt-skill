@@ -2,7 +2,7 @@
 """Fallback CLI for codex-ppt image generation or editing with GPT Image models.
 
 Used when Codex's built-in image tool is unavailable, when the user explicitly
-opts into CLI/API mode, or when explicit transparent output requires the
+opts into API mode, or when explicit transparent output requires the
 `gpt-image-1.5` fallback path.
 
 Defaults to gpt-image-2 and a structured prompt augmentation workflow.
@@ -26,7 +26,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 from io import BytesIO
 
 DEFAULT_MODEL = "gpt-image-2"
-DEFAULT_SIZE = "auto"
+DEFAULT_SIZE = "1920x1088"
 DEFAULT_QUALITY = "medium"
 DEFAULT_OUTPUT_FORMAT = "png"
 DEFAULT_CONCURRENCY = 5
@@ -88,6 +88,17 @@ def _default_model() -> str:
     return os.getenv("CODEX_PPT_IMAGE_MODEL", DEFAULT_MODEL)
 
 
+def _api_base_url() -> Optional[str]:
+    return os.getenv("OPENAI_BASE_URL") or None
+
+
+def _api_target_label() -> str:
+    base_url = _api_base_url()
+    if base_url:
+        return f"OpenAI-compatible proxy (OPENAI_BASE_URL={base_url})"
+    return "official OpenAI API (OPENAI_BASE_URL unset)"
+
+
 def _runtime_python_path() -> str:
     home = _runtime_home()
     if os.name == "nt":
@@ -113,12 +124,32 @@ def _dependency_hint(package: str, *, upgrade: bool = False) -> str:
 
 def _ensure_api_key(dry_run: bool) -> None:
     if os.getenv("OPENAI_API_KEY"):
-        print("OPENAI_API_KEY is set.", file=sys.stderr)
+        print(f"OPENAI_API_KEY is set. API target: {_api_target_label()}.", file=sys.stderr)
         return
     if dry_run:
-        _warn("OPENAI_API_KEY is not set; dry-run only.")
+        _warn(f"OPENAI_API_KEY is not set; dry-run only. API target: {_api_target_label()}.")
         return
-    _die("OPENAI_API_KEY is not set. Export it before running.")
+    runtime_script = _skill_root() / "scripts" / "codex_ppt_runtime.py"
+    config_doc = _skill_root() / "docs" / "image-model-configuration.md"
+    base_url = _api_base_url()
+    model = _default_model()
+    if base_url:
+        command = (
+            f'python3 {runtime_script} config --api-key "your-api-key" '
+            f'--base-url "{base_url}" --model {model}'
+        )
+        target_hint = f"Detected third-party OpenAI-compatible API via OPENAI_BASE_URL={base_url}."
+    else:
+        command = f'python3 {runtime_script} config --api-key "your-api-key" --model {model}'
+        target_hint = "Detected official OpenAI API mode because OPENAI_BASE_URL is not set."
+    _die(
+        "OPENAI_API_KEY is not set for codex-ppt CLI/API fallback.\n"
+        f"{target_hint}\n"
+        "Use the built-in image tool if it is available. Otherwise configure the shared runtime once:\n"
+        f"  {command}\n"
+        "To use a third-party proxy, set OPENAI_BASE_URL and the provider's model name.\n"
+        f"Details: {config_doc}"
+    )
 
 
 def _read_prompt(prompt: Optional[str], prompt_file: Optional[str]) -> str:

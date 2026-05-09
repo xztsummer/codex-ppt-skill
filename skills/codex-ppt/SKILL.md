@@ -1,6 +1,6 @@
 ---
 name: codex-ppt
-description: Generate image-based PowerPoint decks from articles, reports, papers, notes, or outlines. Use this skill when the user asks Codex to create a visually unified PPT/PPTX deck where each slide is a full-slide generated image, then assemble those images into a PowerPoint file.
+description: Generate image-based PowerPoint decks from articles, reports, papers, notes, or outlines. Use this skill when the user asks to create a visually unified PPT/PPTX deck where each slide is a full-slide generated image, then assemble those images into a PowerPoint file.
 ---
 
 # Codex PPT
@@ -9,7 +9,7 @@ description: Generate image-based PowerPoint decks from articles, reports, paper
 
 This skill creates image-based PPT decks. Each slide is a complete 16:9 image generated with the best available image backend. The image contains the slide title, key points, and visual composition. The generated images are then assembled into a `.pptx` file with `scripts/assemble_ppt.py`.
 
-Prefer Codex's built-in image generation and editing tool when it is available. If it is unavailable, or if the user explicitly requests API/CLI mode, use this skill's local fallback CLI at `scripts/image_gen.py`.
+Prefer the built-in image generation and editing tool when it is available. If it is unavailable, or if the user explicitly requests API/CLI mode, use this skill's local fallback CLI at `scripts/image_gen.py`.
 
 ## Use When
 
@@ -32,12 +32,11 @@ This skill supports two image backends:
 
 Backend selection rules:
 
-- Use the built-in image tool by default when the current Codex environment exposes one.
-- Use the local API/CLI fallback when the built-in image tool is unavailable, or when the user explicitly asks for API, CLI, model, size, quality, or OpenAI-compatible proxy control.
-- Do not depend on `~/.codex/skills/.system/imagegen/scripts/image_gen.py`; this skill has its own project-local fallback script.
-- Do not ask for API keys when using the built-in image tool.
-- For CLI/API fallback, require `OPENAI_API_KEY`. If the user uses an OpenAI-compatible third-party proxy, also use `OPENAI_BASE_URL`, usually ending in `/v1`.
-- Never ask the user to paste an API key into chat. Ask them to set environment variables locally and confirm when ready.
+- Prefer the built-in image tool when available. Resolution, quality, aspect ratio, or slide-edit requests alone do not require CLI/API fallback.
+- Use CLI/API fallback only when the built-in tool is unavailable, the user explicitly asks for API/CLI or a third-party OpenAI-compatible proxy, or the requested capability is unavailable in the built-in tool.
+- CLI/API fallback loads `~/.codex-ppt-skill/.env` automatically. Run the CLI normally; do not manually parse `.env` or ask for configuration before an error.
+- Ask for configuration only after the CLI reports missing `OPENAI_API_KEY`, after authentication/base URL/model errors, or when the user explicitly wants to change API settings. Configure provided values with `scripts/codex_ppt_runtime.py config --api-key`.
+- For detailed fallback setup after an error, read `docs/image-model-configuration.md`.
 
 CLI/API fallback commands use the shared runtime environment. Let `{skill_root}` mean the directory containing this `SKILL.md`.
 
@@ -45,8 +44,8 @@ CLI/API fallback commands use the shared runtime environment. Let `{skill_root}`
 ~/.codex-ppt-skill/.venv/bin/python {skill_root}/scripts/image_gen.py generate \
   --model gpt-image-2 \
   --prompt-file {prompt_file} \
-  --size 3840x2160 \
-  --quality high \
+  --size 1920x1088 \
+  --quality medium \
   --out {base_dir}/{deck_name}/origin_image/slide_01.png
 ```
 
@@ -56,18 +55,7 @@ For CLI/API fallback, first make sure dependencies are installed:
 python3 {skill_root}/scripts/codex_ppt_runtime.py bootstrap
 ```
 
-Use the shared runtime config for real API calls:
-
-```bash
-python3 {skill_root}/scripts/codex_ppt_runtime.py config \
-  --api-key-stdin \
-  --base-url "https://your-openai-compatible-endpoint/v1" \
-  --model gpt-image-2
-```
-
-This writes `~/.codex-ppt-skill/.env` with mode `0600`. The config is reused by Codex, Claude Code, OpenClaw, Hermes Agent, and other local agents. Process environment variables override `.env` values, and `--model` overrides `CODEX_PPT_IMAGE_MODEL` for a single command.
-
-If a proxy provider exposes a custom model name, pass it with `--model`. The fallback CLI accepts model names containing `gpt-image-`, such as `gpt-image-2` or `openai/gpt-image-2`.
+Use the shared runtime config for real API calls. The fallback CLI loads existing config automatically; only load `docs/image-model-configuration.md` after the CLI reports missing config, when the user explicitly wants to change API key, base URL, or model, or when a real API call reports authentication, permission, base URL, or model availability failure. The fallback CLI accepts model names containing `gpt-image-`, such as `gpt-image-2` or `openai/gpt-image-2`.
 
 The fallback CLI supports:
 
@@ -75,7 +63,7 @@ The fallback CLI supports:
 - `edit`: edit one or more existing images, optionally with a mask.
 - `generate-batch`: generate many slide images from a JSONL prompt file.
 
-For 4K landscape slides, use `--size 3840x2160 --quality high`. For portrait assets, use `--size 2160x3840` only if the user requests portrait output.
+The fallback CLI defaults to 1080p-level landscape output, `1920x1088`, because `gpt-image-2` sizes must use dimensions divisible by 16. For 4K landscape slides, use `--size 3840x2160 --quality high` only when the user asks for 4K, text-heavy slides need sharper output, or the default result is blurry. For portrait assets, use `--size 2160x3840` only if the user requests portrait output.
 
 Transparent-background requests:
 
@@ -99,7 +87,7 @@ If the user did not specify a page count, choose a practical count based on cont
 
 ### 2. Plan The Deck Outline
 
-Create a concise outline before generating images. For each slide, define:
+Create a concise `outline.md` draft before generating images. For each slide, define:
 
 - Slide number
 - Slide title
@@ -107,7 +95,9 @@ Create a concise outline before generating images. For each slide, define:
 - Optional visual idea
 - Layout role and intent, such as cover, agenda, section divider, concept explanation, process, comparison, timeline, data evidence, architecture, case study, summary, or Q&A
 
-Show the outline to the user for confirmation before generating slide images, unless the user explicitly asked you to skip confirmation.
+Save the draft to `{base_dir}/{deck_name}/outline.md` once the project directory is known. If the output directory is not known yet, show the outline in chat first and write it to `outline.md` immediately after creating the project directory.
+
+Show the outline to the user for confirmation and wait for approval before moving to visual style selection or image generation, unless the user explicitly asked you to skip confirmation. If the user requests changes, update `outline.md` and ask for confirmation again.
 
 Recommended structure:
 
@@ -157,9 +147,8 @@ Example style confirmation:
 A. 清爽专业风（推荐）：浅色背景、蓝绿强调色、结构清晰，适合汇报、答辩和技术分享。
 B. 创意杂志风：大标题、强图片、留白更大胆，适合分享和传播。
 C. 数据仪表盘风：指标卡、图表感布局，适合数据密集型报告。
-D. 科研答辩风：蓝色结构、红色重点、高密度证据图表，适合课题申报、中期检查、结题验收和论文答辩。
 
-你选哪个？也可以指定要调整的配色、布局或插画方向。
+你选哪个？也可以指定要调整的配色、布局或插画方向，或者上传一张喜欢的 PPT 风格图片让我参考。
 ```
 
 ### 4. Generate One Sample Slide For Approval
@@ -270,7 +259,7 @@ Save images as:
 ...
 ```
 
-After each image is generated, copy or move it into `{base_dir}/{deck_name}/origin_image/` immediately. Do not leave final slide images only in Codex's default generated-images directory.
+After each image is generated, copy or move it into `{base_dir}/{deck_name}/origin_image/` immediately. Do not leave final slide images only in a temporary or default generated-images directory.
 
 In CLI/API fallback mode, you may generate slides one at a time or use `generate-batch`. For batch generation, create a JSONL file where each job has a distinct prompt and an `out` value such as `slide_01.png`, then run:
 
@@ -278,8 +267,8 @@ In CLI/API fallback mode, you may generate slides one at a time or use `generate
 ~/.codex-ppt-skill/.venv/bin/python {skill_root}/scripts/image_gen.py generate-batch \
   --input {base_dir}/{deck_name}/image_prompts.jsonl \
   --out-dir {base_dir}/{deck_name}/origin_image \
-  --size 3840x2160 \
-  --quality high \
+  --size 1920x1088 \
+  --quality medium \
   --concurrency 5
 ```
 
@@ -308,23 +297,9 @@ Before assembling the PPT, inspect every slide image. Check:
 
 If a slide has severe text or layout issues, regenerate it with a more constrained prompt. If a slide is mostly correct but has a localized issue, use the selected backend's edit capability when available. In CLI/API fallback mode, use `scripts/image_gen.py edit --image {slide_path} --prompt ... --out {new_slide_path}` and replace the final slide only after validating the edited output.
 
-### 8. Write Supporting Files
+### 8. Write Speaker Notes
 
-Create `outline.md` with the final deck outline:
-
-```markdown
-# {Deck Title}
-
-## Outline
-
-### Slide 1: {Title}
-- {Point}
-- {Point}
-
-### Slide 2: {Title}
-- {Point}
-- {Point}
-```
+Make sure `outline.md` reflects the final confirmed deck outline from step 2. Do not recreate it from scratch here.
 
 Create `speech.md` with speaker notes. Keep it useful and concise: 1-3 short paragraphs per slide is usually enough.
 
