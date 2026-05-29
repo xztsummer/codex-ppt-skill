@@ -203,6 +203,10 @@ The skill follows this workflow:
 - You can also provide PPT style references you like — a single screenshot, multiple screenshots, or a full PPT/PDF. Ask the current agent to analyze the colors, layout, typography, and visual elements first, then generate a new deck in that style. Once the result looks good, you can ask the agent to save the style into this skill's `references/` directory for future reuse.
 - If you need to include paper figures, experiment charts, screenshots, or architecture diagrams, specify the target slide and role for each image in the outline.
 
+## QA
+
+- Feishu doc: [codex-ppt FAQ and usage notes](https://icn42st819e7.feishu.cn/wiki/WKIvw81DqinKzcknjiZcbhTMniW?from=from_copylink)
+
 ## Community
 
 Scan the QR code to join the Skill community group, share usage experience, report issues, and receive update notices.
