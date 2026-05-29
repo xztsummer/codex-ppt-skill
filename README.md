@@ -203,6 +203,10 @@ skill 会按以下流程执行：
 - 你也可以提供喜欢的 PPT 风格参考，可以是一张截图、多张截图，或完整 PPT/PDF。建议先让当前 agent 分析参考材料的配色、版式、字体和视觉元素，再按这个风格生成新 PPT。生成满意后，也可以让 agent 把这套风格保存到本技能的 `references/` 目录里，方便以后复用。
 - 如果需要插入论文原图、实验结果图、截图或架构图，可以在大纲中指定这些图片对应的页码和用途。
 
+## QA
+
+- 飞书文档：[codex-ppt 常见问题与使用说明](https://icn42st819e7.feishu.cn/wiki/WKIvw81DqinKzcknjiZcbhTMniW?from=from_copylink)
+
 ## 交流群
 
 扫描二维码加入 Skill 交流群，分享使用经验、反馈问题，并获取更新通知。
