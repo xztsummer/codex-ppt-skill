@@ -65,8 +65,8 @@ def get_slide_images(ppt_project_dir: str) -> List[str]:
             if ext in image_extensions and slide_name_pattern.match(file):
                 image_files.append(file_path)
 
-    # 按文件名排序
-    image_files.sort()
+    # 按文件名排序，解决slide_10排在slide_2前面问题
+    image_files.sort(key = lambda p: int(re.search(r"^slide_(\d+)", p.stem).group(1)))
 
     return image_files
 
