@@ -4,6 +4,10 @@ Release notes are generated from this file. Keep changelog entries in English.
 
 ## Unreleased
 
+### Fixes
+
+- Sort slide images by numeric index when assembling decks. (#52)
+
 ### Documentation
 
 - Add README one-sentence install guidance and related project links. (#49)
