@@ -2,7 +2,18 @@
 
 [![中文](https://img.shields.io/badge/docs-中文-red)](README.md) [![ClawHub](https://img.shields.io/badge/ClawHub-codex--ppt-cd3b35)](https://clawhub.ai/ningzimu/codex-ppt) [![GitHub stars](https://img.shields.io/github/stars/ningzimu/codex-ppt-skill?style=flat&logo=github&label=stars)](https://github.com/ningzimu/codex-ppt-skill/stargazers) [![GitHub forks](https://img.shields.io/github/forks/ningzimu/codex-ppt-skill?style=flat&logo=github&label=forks)](https://github.com/ningzimu/codex-ppt-skill/forks)
 
-A Codex skill for generating PowerPoint decks. It can also be used in Claude Code, OpenClaw, Hermes Agent, and other agents that support `SKILL.md`; these non-Codex environments usually require configuring `gpt-image-2` or a third-party OpenAI-compatible image generation API. It turns articles, reports, papers, course notes, and other source materials into image-based presentations: first plan the outline and visual style, then generate each full-slide image, and finally assemble the images into a `.pptx` file with a local script.
+A Codex skill for generating PowerPoint decks. It can also be used in Claude Code, OpenClaw, Hermes Agent, and other agents that support `SKILL.md`; these non-Codex environments usually require configuring `gpt-image-2`, a third-party image API, or an OpenAI-compatible image generation endpoint. It turns articles, reports, papers, course notes, and other source materials into image-based presentations: first plan the outline and visual style, then generate each full-slide image, and finally assemble the images into a `.pptx` file with a local script.
+
+## Sponsor
+
+<table>
+<tr>
+<td width="180"><img src="assets/atlas-cloud-logo.png" alt="Atlas Cloud" width="160"></td>
+<td>Thanks to <a href="https://www.atlascloud.ai/?utm_source=github&utm_medium=link&utm_campaign=codex-ppt-skill">Atlas Cloud</a> for sponsoring this project. AtlasCloud is a multimodal AI inference platform that provides one API for image generation, video generation, LLMs, and more. This skill can use the existing API key, base URL, and model-name configuration to call AtlasCloud's GPT Image 2 generation and editing endpoints, with pay-as-you-go pricing and out-of-the-box setup. See the full model list on the <a href="https://www.atlascloud.ai/zh/models">Atlas Cloud models page</a>.</td>
+</tr>
+</table>
+
+## Friendly Note
 
 > [!TIP]
 > This skill generates image-based PPT decks from articles, reports, outlines, or ideas. It is suitable for strong visual expression, but slide elements are not directly editable. If you need a more editable PPT, you can try converting the generated deck with [image-to-editable-ppt-skill](https://github.com/ningzimu/image-to-editable-ppt-skill).
@@ -13,8 +24,6 @@ A Codex skill for generating PowerPoint decks. It can also be used in Claude Cod
 
 > [!NOTE]
 > To see more PPT examples made by users with this skill, visit the pinned showcase issue: [欢迎分享 codex-ppt 使用案例和 PPT 效果](https://github.com/ningzimu/codex-ppt-skill/issues/34).
-
-## Friendly Note
 
 This skill is meant to provide a solid PPT generation workflow. To stay broadly useful, the workflow is a little more complex than most people need every day, and that complexity can sometimes add instability or redundant choices. For example, it supports both Codex built-in image generation and API/CLI fallback generation, and it also supports workflows with or without subagents. Most users will eventually use only one of those paths.
 
@@ -27,7 +36,7 @@ For a basic introduction to skill design and usage, see [good-skill-design.pptx]
 ## Features
 
 - Works across multiple agents: supports Codex, Claude Code, OpenClaw, Hermes Agent, and other `SKILL.md`-based environments; Codex is the recommended environment because it can use the built-in image generation and image editing tools first.
-- Supports third-party proxy APIs: works with OpenAI-compatible endpoints, `base URL`, and custom model names, so API/CLI fallback can use `gpt-image-2` or compatible image models.
+- Supports third-party image providers: works with OpenAI-compatible endpoints, AtlasCloud, `base URL`, and custom model names, so API/CLI fallback can use `gpt-image-2` or compatible image models.
 - Stable staged workflow: confirms the outline, slide count, visual style, image backend, and sample slide before full-deck generation, reducing drift and rework when generating a complete PPT.
 - Guided instead of one-shot: the skill asks you to confirm `outline.md`, per-slide key points, style direction, and sample-slide quality before continuing.
 - Low setup effort: articles, reports, papers, course notes, Markdown files, outlines, PDFs, and Word documents can all be used as starting material.
@@ -164,35 +173,9 @@ If you are developing this repository locally, you can use a symlink instead of 
 > You can start using Codex PPT normally to make a deck. In most cases, you do not need to configure the image model by hand; when the workflow asks you to choose an image backend, the AI will check the current environment and guide you through any required information.
 >
 > - If you use Codex's built-in image generation, you usually do not need an extra API key.
-> - If you use a third-party API or an OpenAI-compatible proxy, send the AI that provider's documentation for using `gpt-image-2` first, then let it read the docs and configure the relevant scripts and parameters.
+> - If you have confirmed that a third-party provider or OpenAI-compatible proxy is needed, ask the AI to read the [image model configuration guide](skills/codex-ppt/docs/image-model-configuration.md) before configuring API key, base URL, and model name.
 
-The manual configuration notes below mainly apply to API/CLI fallback. Asking for a specific resolution, higher quality, or edits to one slide does not by itself trigger third-party API configuration. Typical cases that require configuration include:
-
-- Using a third-party API or OpenAI-compatible proxy in Codex, where the built-in image generation tool is usually unavailable.
-- Using this skill from Claude Code, OpenClaw, Hermes Agent, or similar agents.
-
-If you use Codex through a GPT subscription and Codex's built-in image generation tool is available, you do not need to configure `gpt-image-2` separately. Even if your prompt says “use `gpt-image-2`”, you can usually keep using Codex's built-in image generation and do not need to prepare an API key.
-
-If you do need an external image API, the config is written to `~/.codex-ppt-skill/.env`. Add a `base URL` only when using a third-party proxy. The model defaults to `gpt-image-2`; change it only if your proxy requires a different model name. Once configured, Codex, Claude Code, OpenClaw, and Hermes Agent can share the same settings.
-
-If you need to configure or troubleshoot it manually, you can run the config command directly:
-
-```bash
-python3 /path/to/codex-ppt-skill/skills/codex-ppt/scripts/codex_ppt_runtime.py config \
-  --api-key "your-api-key" \
-  --model gpt-image-2
-```
-
-`--api-key` is your API key. `--model` is the image model name, and `gpt-image-2` is the default choice. The config is written to `~/.codex-ppt-skill/.env`. Do not write API keys into the project directory or commit them to the repository.
-
-If you use a third-party proxy, add `--base-url`. If the proxy uses a custom model name, replace `--model` with the name provided by that proxy:
-
-```bash
-python3 /path/to/codex-ppt-skill/skills/codex-ppt/scripts/codex_ppt_runtime.py config \
-  --api-key "your-api-key" \
-  --base-url "https://your-openai-compatible-endpoint/v1" \
-  --model openai/gpt-image-2
-```
+Asking for a specific resolution, higher quality, or edits to one slide does not by itself trigger third-party API configuration. If you use Codex through a GPT subscription and Codex's built-in image generation tool is available, you can usually keep using the built-in image tool and do not need to prepare an API key.
 
 ## Usage
 
