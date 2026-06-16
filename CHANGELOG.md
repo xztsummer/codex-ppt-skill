@@ -6,11 +6,11 @@ Release notes are generated from this file. Keep changelog entries in English.
 
 ### Features
 
-- Add an AtlasCloud image provider adapter for GPT Image 2 generation and editing.
+- Add an AtlasCloud image provider adapter for GPT Image 2 generation and editing. (#60)
 
 ### Documentation
 
-- Document OpenAI-compatible and AtlasCloud image provider configuration examples.
+- Document OpenAI-compatible and AtlasCloud image provider configuration examples. (#60)
 
 ## 0.4.4
 
