@@ -2,7 +2,18 @@
 
 [![English](https://img.shields.io/badge/docs-English-blue)](README_en.md) [![ClawHub](https://img.shields.io/badge/ClawHub-codex--ppt-cd3b35)](https://clawhub.ai/ningzimu/codex-ppt) [![GitHub stars](https://img.shields.io/github/stars/ningzimu/codex-ppt-skill?style=flat&logo=github&label=stars)](https://github.com/ningzimu/codex-ppt-skill/stargazers) [![GitHub forks](https://img.shields.io/github/forks/ningzimu/codex-ppt-skill?style=flat&logo=github&label=forks)](https://github.com/ningzimu/codex-ppt-skill/forks)
 
-一个面向 Codex 的 PPT 生成 skill，也可在 Claude Code、OpenClaw、Hermes Agent 等支持 `SKILL.md` 的 agent 中使用；在这些非 Codex 环境中通常需要配置 `gpt-image-2` 或第三方 OpenAI 兼容格式的生图 API。它把文章、报告、论文、课程笔记等内容转换成“整页图片式”的演示文稿：先规划大纲和视觉风格，再生成每页幻灯片图片，最后用本地脚本组装为 `.pptx`。
+一个面向 Codex 的 PPT 生成 skill，也可在 Claude Code、OpenClaw、Hermes Agent 等支持 `SKILL.md` 的 agent 中使用；在这些非 Codex 环境中通常需要配置 `gpt-image-2`、第三方生图 API 或 OpenAI 兼容格式的生图接口。它把文章、报告、论文、课程笔记等内容转换成“整页图片式”的演示文稿：先规划大纲和视觉风格，再生成每页幻灯片图片，最后用本地脚本组装为 `.pptx`。
+
+## 赞助
+
+<table>
+<tr>
+<td width="180"><img src="assets/atlas-cloud-logo.png" alt="Atlas Cloud" width="160"></td>
+<td>感谢 <a href="https://www.atlascloud.ai/?utm_source=github&utm_medium=link&utm_campaign=codex-ppt-skill">Atlas Cloud</a> 赞助本项目。AtlasCloud 是多模态 AI 推理平台，提供统一 API 接入图片生成、视频生成和大语言模型等能力；本 skill 已支持通过现有 API key、base URL 和模型名配置接入 AtlasCloud 的 GPT Image 2 生图和编辑图接口，按量计费，开箱即用。完整模型列表可查看 <a href="https://www.atlascloud.ai/zh/models">Atlas Cloud 模型页</a>。</td>
+</tr>
+</table>
+
+## 温馨提示
 
 > [!TIP]
 > 本 skill 负责从文章、报告、大纲或想法生成图片式 PPT，适合强视觉表达，但页面元素本身不可直接编辑。如果你需要进一步转换成可编辑 PPT，可以在生成完成后尝试使用 [image-to-editable-ppt-skill](https://github.com/ningzimu/image-to-editable-ppt-skill) 进行转换。
@@ -13,8 +24,6 @@
 
 > [!NOTE]
 > 想查看更多用户用这个 skill 做出的 PPT 效果，可以前往置顶 Issue 的案例展示区：[欢迎分享 codex-ppt 使用案例和 PPT 效果](https://github.com/ningzimu/codex-ppt-skill/issues/34)。
-
-## 温馨提示
 
 这个 skill 主要给大家提供一个还不错的 PPT 生成流程。为了尽量通用，它的流程设计会稍微复杂一些；复杂也会带来不稳定性或者冗余性。比如它同时兼容 Codex 内置生图和 API/CLI fallback 生图，也会兼容有无子 agent 可用这两种情况，但大部分人日常使用时其实只会固定走其中一条路线。
 
@@ -27,7 +36,7 @@
 ## 特点
 
 - 多 agent 可用：支持 Codex、Claude Code、OpenClaw、Hermes Agent 等支持 `SKILL.md` 的环境；最推荐在 Codex 中使用，优先走内置生图和编辑图能力。
-- 第三方中转站接入：支持 OpenAI 兼容接口、`base URL` 和自定义模型名配置，方便通过 API/CLI fallback 使用 `gpt-image-2` 或兼容模型。
+- 第三方生图供应商接入：支持 OpenAI 兼容接口、AtlasCloud、`base URL` 和自定义模型名配置，方便通过 API/CLI fallback 使用 `gpt-image-2` 或兼容模型。
 - 稳定的阶段化流程：先确认大纲、页数、视觉风格、生图后端和样张，再进入整套生成，降低一次生成完整 PPT 时的返工和偏航。
 - 不是无脑生成：会先引导你确认 `outline.md`、每页要点、风格方向和样张效果，再按确认后的方案继续。
 - 低门槛输入：文章、报告、论文、课程笔记、Markdown、大纲、PDF、Word 等材料都可以作为起点。
@@ -164,35 +173,9 @@ npx -y skills@latest add ningzimu/codex-ppt-skill \
 > 你可以先正常使用 Codex PPT 开始制作 PPT。一般不需要自己手动配置生图模型；当流程走到“选择生图后端”时，AI 会根据当前环境判断是否需要配置，并在需要时引导你提供相关信息。
 >
 > - 如果你使用的是 Codex 内置图片生成能力，通常不需要额外配置 API key。
-> - 如果你使用第三方 API 或 OpenAI 兼容中转站，请把中转站关于如何使用 `gpt-image-2` 的文档发给 AI，让它先阅读文档，再帮你配置相关脚本和参数。
+> - 如果你确定要使用第三方供应商或 OpenAI 兼容中转站，请让 AI 先阅读 [生图模型配置指南](skills/codex-ppt/docs/image-model-configuration.md)，再配置 API key、base URL 和模型名。
 
-下面的手动配置说明主要用于 API/CLI fallback 场景。指定图片分辨率、提高质量或要求修改某一页，本身不会触发第三方 API 配置。典型需要配置的情况包括：
-
-- 在 Codex 中使用第三方 API 或兼容中转站接入时，通常无法使用内置的图片生成工具。
-- 在 Claude Code、OpenClaw、Hermes Agent 等环境中使用该 skill。
-
-如果你是通过 GPT 会员订阅使用 Codex，并且 Codex 内置图片生成工具可用，就不需要额外配置 `gpt-image-2`。即使你在提示词里写“使用 `gpt-image-2`”，通常也可以继续使用 Codex 内置生图能力，不需要准备 API key。
-
-如果确实需要外部生图接口，配置文件会写入 `~/.codex-ppt-skill/.env`。使用第三方中转站时再填写 `base URL`；模型名默认是 `gpt-image-2`，除非中转站明确要求别的名称。配置完成后，Codex、Claude Code、OpenClaw、Hermes Agent 可以复用同一套配置。
-
-确实需要手动配置或排查时，也可以直接运行配置命令：
-
-```bash
-python3 /path/to/codex-ppt-skill/skills/codex-ppt/scripts/codex_ppt_runtime.py config \
-  --api-key "your-api-key" \
-  --model gpt-image-2
-```
-
-其中 `--api-key` 是你的 API key；`--model` 是图片模型名，默认可使用 `gpt-image-2`。配置会写入 `~/.codex-ppt-skill/.env`。不要把 API key 写进项目目录或提交到仓库。
-
-如果使用第三方中转站，再加上 `--base-url`。如果中转站使用自定义模型名，就把 `--model` 改成中转站提供的名称：
-
-```bash
-python3 /path/to/codex-ppt-skill/skills/codex-ppt/scripts/codex_ppt_runtime.py config \
-  --api-key "your-api-key" \
-  --base-url "https://your-openai-compatible-endpoint/v1" \
-  --model openai/gpt-image-2
-```
+指定图片分辨率、提高质量或要求修改某一页，本身不会触发第三方 API 配置。如果你是通过 GPT 会员订阅使用 Codex，并且 Codex 内置图片生成工具可用，通常可以继续使用内置生图能力，不需要准备 API key。
 
 ## 使用方式
 
