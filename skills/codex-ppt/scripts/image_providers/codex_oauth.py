@@ -68,15 +68,16 @@ class CodexOAuthImageProvider(ImageProvider):
         return extract_codex_json_image_payloads(parsed)
 
     def _images_body(self, payload: Dict[str, Any], image_paths: List[Path]) -> Dict[str, Any]:
-        output_format = payload.get("output_format")
-        if isinstance(output_format, str) and output_format.lower() != "png":
-            raise RuntimeError("Codex OAuth images endpoint currently supports png output only.")
-
         body: Dict[str, Any] = {
             "prompt": str(payload["prompt"]),
             "model": str(payload["model"]),
         }
-        for key in ("n", "size", "quality", "background"):
+        for key in (
+            "n",
+            "size",
+            "quality",
+            "background",
+        ):
             value = payload.get(key)
             if value is not None:
                 body[key] = value
