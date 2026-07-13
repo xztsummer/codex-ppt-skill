@@ -4,6 +4,11 @@ Release notes are generated from this file. Keep changelog entries in English.
 
 ## Unreleased
 
+### Improvements
+
+- Make the Party-and-Government Red style more adaptable by replacing fixed layout and motif prescriptions with content-driven visual guidance. (#82)
+- Make the Teaching Courseware style more adaptable across disciplines by removing example-specific subject matter, fixed module counts, and repetitive card-grid assumptions. (#82)
+
 ## 0.5.4
 
 ### Features
